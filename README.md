@@ -9,10 +9,10 @@ A fórmula atual reproduz a descrição pública da nota de uma plataforma de re
 ## O que a proposta muda
 
 1. **O recente vale mais:** cada avaliação perde metade do peso a cada 90 dias (ajustável), olhando 12 meses.
-2. **Pouco volume parte da média do segmento:** a nota se aproxima da nota real da empresa conforme o volume cresce. Não existe mais o corte de 10 avaliações.
+2. **Pouco volume parte da média do segmento:** a nota se aproxima da nota real da empresa conforme o volume recente cresce (contado com o peso da regra 1). Vale para reclamações e reviews. Não existe mais o corte de 10 reclamações.
 3. **Reviews entram com cuidado:** só compra verificada, com peso de 20%, ou em uma nota separada de produto.
 4. **A nota diz de onde veio:** quantas reclamações, quantos reviews e de que período.
-5. **Picos fora do normal ficam em espera:** sem isso, a regra 1 deixaria ataques recentes mais fortes.
+5. **Picos fora do normal ficam em espera:** sem isso, a regra 1 deixaria ataques recentes mais fortes. Neste protótipo, cobre só reclamações, e a verificação não é simulada.
 
 ## Rodar localmente
 

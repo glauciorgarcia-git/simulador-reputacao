@@ -21,7 +21,7 @@
     ordem: { chave: 'diff', dir: -1 },
     filtroSeg: '',
     soMuda: false,
-    ataque: { empresaId: null, qtd: 30, tipo: 'positivo' }
+    ataque: { empresaId: null, qtd: 30, tipo: 'negativo', responde: true }
   };
 
   /* ---------- utilidades ---------- */
@@ -56,18 +56,8 @@
     });
   }
 
-  function falsas(qtd, tipo) {
-    var lista = [];
-    for (var i = 0; i < qtd; i++) {
-      lista.push(tipo === 'positivo'
-        ? { idade: i % 7, respondida: true, resolvida: true, voltaria: true, nota: 10 }
-        : { idade: i % 7, respondida: true, resolvida: false, voltaria: false, nota: 0 });
-    }
-    return lista;
-  }
-
   function simularAtaque(e, qtd, tipo) {
-    var atacada = Object.assign({}, e, { reclamacoes: e.reclamacoes.concat(falsas(qtd, tipo)) });
+    var atacada = Object.assign({}, e, { reclamacoes: e.reclamacoes.concat(F.reclamacoesFalsas(qtd, tipo, estado.ataque.responde)) });
     var semPicos = Object.assign({}, params, { picos: false });
     var mSem = medias(semPicos);
     return {
@@ -84,8 +74,10 @@
   }
 
   function empresaPadraoAtaque() {
-    // A menor empresa com nota atual definida que ainda não é Ótima.
-    var cand = linhas.filter(function (l) { return l.a.definida && l.a.faixa !== 'Ótima'; })
+    // A menor empresa com nota atual definida, que ainda não é Ótima e não é Não recomendada em nenhuma fórmula.
+    var cand = linhas.filter(function (l) {
+      return l.a.definida && l.a.faixa !== 'Ótima' && l.a.faixa !== 'Não recomendada' && l.p.faixa !== 'Não recomendada';
+    })
       .sort(function (x, y) { return x.e.reclamacoes.length - y.e.reclamacoes.length || x.e.id - y.e.id; });
     return (cand[0] || linhas[0]).e.id;
   }
@@ -100,9 +92,9 @@
       else caem++;
     });
     var partes = [];
-    if (ganham) partes.push('<b>' + ganham + '</b> hoje sem reputação definida passam a ter nota');
-    if (sobem) partes.push('<b>' + sobem + '</b> sobem');
-    if (caem) partes.push('<b>' + caem + '</b> caem');
+    if (ganham) partes.push('<b>' + ganham + '</b> hoje sem reputação definida ' + (ganham === 1 ? 'passa' : 'passam') + ' a ter nota');
+    if (sobem) partes.push('<b>' + sobem + '</b> ' + (sobem === 1 ? 'sobe' : 'sobem'));
+    if (caem) partes.push('<b>' + caem + '</b> ' + (caem === 1 ? 'cai' : 'caem'));
     var txt = '<b>' + mudam.length + ' das ' + TOTAL + ' empresas</b> mudam de faixa com a proposta';
     if (partes.length) txt += ': ' + partes.slice(0, -1).join(', ') + (partes.length > 1 ? ' e ' : '') + partes[partes.length - 1];
     return txt + '.';
@@ -110,8 +102,8 @@
 
   function textoAtaque(e, r, qtd, tipo) {
     var a = r.atual, p = r.proposta;
-    var tipoTxt = tipo === 'positivo' ? 'avaliações falsas com nota máxima' : 'avaliações negativas de um concorrente';
-    var txt = 'Num ataque de ' + qtd + ' ' + tipoTxt + ', a empresa ' + e.nome + ' (' + e.reclamacoes.length + ' avaliações no ano) ';
+    var tipoTxt = tipo === 'positivo' ? 'reclamações falsas com nota máxima' : 'reclamações falsas de um concorrente, com nota mínima';
+    var txt = 'Num ataque de ' + qtd + ' ' + tipoTxt + ', a empresa ' + e.nome + ' (' + e.reclamacoes.length + ' reclamações avaliadas no ano) ';
     if (a.antes.faixa !== a.depois.faixa) txt += 'vai de <b>' + a.antes.faixa + '</b> para <b>' + a.depois.faixa + '</b> na fórmula atual';
     else txt += 'continua <b>' + a.antes.faixa + '</b> na fórmula atual';
     if (a.antes.definida && a.depois.definida) txt += ' (' + sinal(a.depois.nota - a.antes.nota) + ')';
@@ -125,18 +117,31 @@
   }
 
   function frase3() {
-    var peso = params.pesoReviews > 0 ? params.pesoReviews : F.PADRAO.pesoReviews;
-    var pUnica = Object.assign({}, params, { modo: 'unica', pesoReviews: peso });
-    var somaCom = 0, somaSem = 0;
-    empresas.forEach(function (e) {
-      var r = F.proposta(e, mediasAtuais[e.segId], pUnica);
-      somaCom += r.nota; somaSem += r.atendimento;
+    var somaAt = 0, somaProd = 0, nProd = 0;
+    var ref = params.pesoReviews > 0 ? params.pesoReviews : F.PADRAO.pesoReviews;
+    var somaMist = 0;
+    linhas.forEach(function (l) {
+      somaAt += l.p.atendimento;
+      if (l.p.produto != null) {
+        somaProd += l.p.produto; nProd++;
+        somaMist += (1 - ref) * l.p.atendimento + ref * l.p.produto;
+      } else somaMist += l.p.atendimento;
     });
-    var com = somaCom / TOTAL, sem = somaSem / TOTAL, d = com - sem;
-    var verbo = F.arred1(d) >= 0 ? 'sobe' : 'cai';
-    return 'Somando os reviews de compra verificada com peso de ' + Math.round(peso * 100) + '%, a nota média ' + verbo +
-      ' <b>' + pontos(d) + '</b> (de ' + num(sem) + ' para ' + num(com) + '). Review pedido pela loja tende a ser positivo, ' +
-      'por isso a opção de mostrar atendimento e produto separados.';
+    var at = somaAt / TOTAL, mist = somaMist / TOTAL, prod = nProd ? somaProd / nProd : null;
+    var d = mist - at, dr = F.arred1(mist) - F.arred1(at);
+    var mov = dr === 0 ? 'não muda' : (dr > 0 ? 'sobe ' : 'cai ') + '<b>' + pontos(Math.abs(dr)) + '</b>';
+    if (params.modo === 'duas') {
+      return 'Com duas notas lado a lado, a média de atendimento é <b>' + num(at) + '</b> e a de produto é <b>' + num(prod) + '</b>. ' +
+        'Se os reviews entrassem numa nota única com peso de ' + Math.round(ref * 100) + '%, a média ' +
+        (dr === 0 ? 'não mudaria' : (dr > 0 ? 'subiria ' : 'cairia ') + pontos(Math.abs(dr))) +
+        '. Review pedido pela loja tende a ser positivo, por isso eles ficam separados.';
+    }
+    if (params.pesoReviews === 0) {
+      return 'Reviews fora da nota: com peso 0%, a nota é só de atendimento (média ' + num(at) + '). A média de produto, à parte, seria ' + num(prod) + '.';
+    }
+    return 'Somando os reviews de compra verificada com peso de ' + Math.round(params.pesoReviews * 100) + '%, a nota média ' + mov +
+      (dr === 0 ? '' : ' (de ' + num(at) + ' para ' + num(mist) + ')') +
+      '. Review pedido pela loja tende a ser positivo, por isso a opção de mostrar atendimento e produto separados.';
   }
 
   /* ---------- render ---------- */
@@ -181,7 +186,7 @@
   var COLUNAS = [
     { chave: 'nome', rotulo: 'Empresa' },
     { chave: 'segmento', rotulo: 'Segmento' },
-    { chave: 'volume', rotulo: 'Avaliações', dica: '12 meses / 6 meses' },
+    { chave: 'volume', rotulo: 'Reclamações', dica: 'Reclamações avaliadas: 12 meses / 6 meses' },
     { chave: 'atual', rotulo: 'Nota atual' },
     { chave: 'faixaAtual', rotulo: 'Faixa atual' },
     { chave: 'proposta', rotulo: 'Nota proposta' },
@@ -230,7 +235,7 @@
     lista.forEach(function (l) {
       var e = l.e, a = l.a, p = l.p;
       var tags = '';
-      if (p.poucoVolume) tags += '<span class="tag tag-volume" title="Nota puxada para a média do segmento">pouco volume</span>';
+      if (p.poucoVolume) tags += '<span class="tag tag-volume" title="Poucas reclamações recentes: nota puxada para a média do segmento">pouco volume</span>';
       if (e.oscilante) tags += '<span class="tag tag-osc" title="Era ruim e melhorou nos últimos 3 meses">melhorou há pouco</span>';
       var origem = p.reclamacoes + ' reclamações' +
         (params.modo === 'duas' || p.usouReviews ? ' e ' + p.reviews + ' reviews verificados' : '') + ', últimos 12 meses';
@@ -242,12 +247,12 @@
       h += '<td data-label="Empresa" class="c-empresa"><div class="nome">' + e.nome + '</div>' +
         (tags ? '<div class="tags">' + tags + '</div>' : '') + '<div class="origem">' + origem + '</div></td>';
       h += '<td data-label="Segmento">' + e.segmento + '</td>';
-      h += '<td data-label="Avaliações (12m / 6m)" class="n"><span>' + e.reclamacoes.length + ' <span class="sub">/ ' + a.n + '</span></span></td>';
+      h += '<td data-label="Reclamações (12m / 6m)" class="n"><span>' + e.reclamacoes.length + ' <span class="sub">/ ' + a.n + '</span></span></td>';
       h += '<td data-label="Nota atual" class="n">' + (a.definida ? num(a.nota) : '<span class="sub">sem nota</span>') + '</td>';
       h += '<td data-label="Faixa atual">' + chip(a.faixa) + '</td>';
       h += '<td data-label="Nota proposta" class="n"><b>' + num(p.nota) + '</b></td>';
       h += '<td data-label="Faixa proposta">' + chip(p.faixa) + '</td>';
-      if (duas) h += '<td data-label="Produto" class="n">' + (p.produto == null ? '<span class="sub">sem reviews</span>' : num(p.produto)) + '</td>';
+      if (duas) h += '<td data-label="Produto" class="n">' + (p.produto == null ? '<span class="sub">sem reviews</span>' : num(p.produto) + (p.poucoVolumeProduto ? ' <span class="tag tag-volume" title="Poucos reviews: nota de produto puxada para a média do segmento">pouco volume</span>' : '')) + '</td>';
       h += '<td data-label="Diferença" class="n">' + diffTxt + '</td>';
       h += '</tr>';
     });
@@ -296,6 +301,8 @@
   function renderControles() {
     $('meiaVida-valor').textContent = params.meiaVida + ' dias';
     $('volumeCheio-valor').textContent = params.volumeCheio;
+    $('atk-responde-campo').hidden = estado.ataque.tipo !== 'negativo';
+    $('atk-responde').checked = estado.ataque.responde;
     $('pesoReviews-valor').textContent = Math.round(params.pesoReviews * 100) + '%';
     $('limitePico-valor').textContent = params.limitePico + 'x';
     $('pesoReviews').disabled = params.modo !== 'unica';
@@ -316,7 +323,7 @@
   function atualizar() {
     if (pendente) return;
     pendente = true;
-    requestAnimationFrame(function () {
+    setTimeout(function () {
       pendente = false;
       calcular();
       renderControles();
@@ -324,7 +331,7 @@
       renderMatriz();
       renderTabela();
       renderAtaque();
-    });
+    }, 16);
   }
 
   /* ---------- eventos ---------- */
@@ -356,6 +363,7 @@
 
     $('atk-empresa').addEventListener('change', function () { estado.ataque.empresaId = +this.value; atualizar(); });
     $('atk-qtd').addEventListener('input', function () { estado.ataque.qtd = +this.value; atualizar(); });
+    $('atk-responde').addEventListener('change', function () { estado.ataque.responde = this.checked; atualizar(); });
     document.querySelectorAll('input[name="atk-tipo"]').forEach(function (r) {
       r.addEventListener('change', function () { estado.ataque.tipo = this.value; atualizar(); });
     });
@@ -370,7 +378,7 @@
       empresas.filter(function (e) { return e.segId === s.id; })
         .sort(function (a, b) { return a.reclamacoes.length - b.reclamacoes.length; })
         .forEach(function (e) {
-          emp += '<option value="' + e.id + '">' + e.nome + ' (' + e.reclamacoes.length + ' avaliações)</option>';
+          emp += '<option value="' + e.id + '">' + e.nome + ' (' + e.reclamacoes.length + ' reclamações)</option>';
         });
       emp += '</optgroup>';
     });

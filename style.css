@@ -267,3 +267,6 @@ html { scroll-behavior: smooth; }
   .matriz th:last-child, .matriz td.total { display: none; }
   .matriz thead .chip { padding: 1px 4px; }
 }
+.sub-check { margin-top: 6px; padding-left: 26px; font-size: 14px !important; color: var(--suave); }
+.campo .info { margin-top: 6px; }
+[hidden] { display: none !important; }

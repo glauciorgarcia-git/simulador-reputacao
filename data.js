@@ -81,14 +81,15 @@
       };
     }
 
-    function estrelas(q) {
+    function estrelas(q, bonus5) {
       // Reviews pedidos pela loja: tendência positiva.
+      // Sem compra verificada, ainda mais positivos (bonus5 > 0).
       var w = [
         0.05 * (1.3 - q) + 0.01,  // 1
         0.07 * (1.3 - q),         // 2
         0.12 * (1.3 - q),         // 3
         0.25,                     // 4
-        0.45 + 0.25 * q           // 5
+        0.45 + 0.25 * q + bonus5  // 5
       ];
       var total = w.reduce(function (s, x) { return s + x; }, 0);
       var r = rnd() * total, acc = 0;
@@ -121,10 +122,11 @@
         var reviews = [];
         var nRev = Math.max(2, Math.round(vol * (0.6 + rnd() * 1.4)));
         for (var r = 0; r < nRev; r++) {
+          var verificada = rnd() < 0.7;
           reviews.push({
             idade: Math.floor(rnd() * 365),
-            estrelas: estrelas(q),
-            verificada: rnd() < 0.7
+            estrelas: estrelas(q, verificada ? 0 : 0.6),
+            verificada: verificada
           });
         }
 

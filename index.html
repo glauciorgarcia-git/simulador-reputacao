@@ -32,12 +32,13 @@
       </div>
       <div class="controles">
         <div class="campo">
-          <label for="meiaVida"><span class="num-regra">1</span> Avaliação perde metade do peso a cada <b id="meiaVida-valor"></b></label>
+          <label for="meiaVida"><span class="num-regra">1</span> Reclamação ou review perde metade do peso a cada <b id="meiaVida-valor"></b></label>
           <input type="range" id="meiaVida" min="15" max="365" step="15">
         </div>
         <div class="campo">
-          <label for="volumeCheio"><span class="num-regra">2</span> Avaliações até a nota ser só da empresa: <b id="volumeCheio-valor"></b></label>
-          <input type="range" id="volumeCheio" min="5" max="100" step="5">
+          <label for="volumeCheio"><span class="num-regra">2</span> Volume recente até a nota ser só da empresa: <b id="volumeCheio-valor"></b></label>
+          <input type="range" id="volumeCheio" min="2" max="50" step="1">
+          <p class="info">Conta com o peso da regra 1: uma reclamação de hoje vale 1, uma de 3 meses atrás vale meia. Vale também para os reviews.</p>
         </div>
         <div class="campo">
           <span class="rotulo"><span class="num-regra">3</span> Reviews de produto</span>
@@ -78,7 +79,7 @@
           <option value="diff">Ordenar: maior mudança</option>
           <option value="proposta">Ordenar: nota proposta</option>
           <option value="atual">Ordenar: nota atual</option>
-          <option value="volume">Ordenar: mais avaliações</option>
+          <option value="volume">Ordenar: mais reclamações</option>
           <option value="nome">Ordenar: nome</option>
         </select>
         <label class="check"><input type="checkbox" id="so-muda"> <span>Só quem muda de faixa</span></label>
@@ -90,20 +91,21 @@
 
     <section class="card" id="ataque" aria-labelledby="t-ataque">
       <h2 id="t-ataque">Simulação de ataque</h2>
-      <p class="explica">Avaliações falsas chegando todas nos últimos 7 dias. Quanto a nota se move em cada fórmula?</p>
+      <p class="explica">Reclamações falsas, já encerradas e avaliadas, chegando todas nos últimos 7 dias. Quanto a nota se move em cada fórmula?</p>
       <div class="atk-controles">
         <div class="campo">
           <label for="atk-empresa">Empresa</label>
           <select id="atk-empresa"></select>
         </div>
         <div class="campo">
-          <label for="atk-qtd">Avaliações falsas: <b id="atk-qtd-valor"></b></label>
+          <label for="atk-qtd">Reclamações falsas: <b id="atk-qtd-valor"></b></label>
           <input type="range" id="atk-qtd" min="5" max="200" step="5" value="30">
         </div>
         <fieldset class="campo radios">
           <legend>Tipo</legend>
-          <label class="check"><input type="radio" name="atk-tipo" value="positivo" checked> <span>A própria empresa, nota máxima</span></label>
-          <label class="check"><input type="radio" name="atk-tipo" value="negativo"> <span>Concorrente, nota mínima</span></label>
+          <label class="check"><input type="radio" name="atk-tipo" value="positivo"> <span>A própria empresa, nota máxima</span></label>
+          <label class="check"><input type="radio" name="atk-tipo" value="negativo" checked> <span>Concorrente, nota mínima</span></label>
+          <label class="check sub-check" id="atk-responde-campo" hidden><input type="checkbox" id="atk-responde"> <span>A empresa responde às reclamações falsas</span></label>
         </fieldset>
       </div>
       <div id="atk-resultado"></div>
@@ -114,20 +116,21 @@
       <h2 id="t-como">Como funciona</h2>
 
       <h3>Fórmula atual</h3>
-      <p>Olha os últimos 6 meses, só reclamações encerradas e avaliadas pelo consumidor. Junta 4 números: % respondidas (peso 2), nota do consumidor (peso 3), % resolvidas (peso 3) e % que voltaria a fazer negócio (peso 2). Com menos de 10 avaliações, não mostra nota. Se a empresa respondeu menos da metade, cai para Não recomendada, seja qual for a nota.</p>
+      <p>Olha os últimos 6 meses. Junta 4 números: % respondidas (peso 2), nota do consumidor (peso 3), % resolvidas (peso 3) e % que voltaria a fazer negócio (peso 2). Com menos de 10 reclamações avaliadas, não mostra nota. Todas as reclamações simuladas já estão encerradas e avaliadas pelo consumidor.</p>
+      <p>A nota é arredondada para uma casa antes de definir a faixa: <b>Ótima</b> de 8 a 10, <b>Boa</b> de 7 a 7,9, <b>Regular</b> de 6 a 6,9, <b>Ruim</b> de 5 a 5,9 e <b>Não recomendada</b> abaixo de 5 ou quando a empresa respondeu menos de 50% das reclamações, seja qual for a nota.</p>
 
       <h3 id="proposta">Proposta</h3>
       <ol class="regras">
-        <li><b>O recente vale mais.</b> Olhamos 12 meses, mas uma avaliação perde metade do peso a cada 90 dias. A de 3 meses atrás vale metade da de hoje, a de 6 meses vale um quarto. Quem melhorou aparece rápido, sem jogar o histórico fora.</li>
-        <li><b>Pouco volume parte da média do segmento.</b> Com 5 de 20 avaliações, a nota é 25% da empresa e 75% da média do segmento. Com 20 ou mais, é 100% da empresa. Acaba o degrau das 10 avaliações: toda empresa tem nota, com o selo "pouco volume" quando for o caso.</li>
-        <li><b>Reviews entram com cuidado.</b> São pedidos pela própria loja e tendem a ser positivos. Por isso só contam os de compra verificada, com peso pequeno (20%). A outra opção é mostrar duas notas, atendimento e produto, sem misturar.</li>
+        <li><b>O recente vale mais.</b> Olhamos 12 meses, mas cada reclamação ou review perde metade do peso a cada 90 dias. A de 3 meses atrás vale metade da de hoje, a de 6 meses vale um quarto. Quem melhorou aparece rápido, sem jogar o histórico fora.</li>
+        <li><b>Pouco volume parte da média do segmento.</b> O volume é contado com o peso da regra 1: uma reclamação de hoje vale 1, uma de 3 meses atrás vale meia. Com volume 5 de 10, a nota é metade da empresa e metade da média do segmento. Com 10 ou mais, é 100% da empresa (no ano, isso dá umas 30 reclamações). Acaba o degrau das 10 reclamações: toda empresa tem nota, com o selo "pouco volume" quando for o caso. O corte de menos de 50% respondidas usa o índice real da empresa, a partir de 10 reclamações.</li>
+        <li><b>Reviews entram com cuidado.</b> São pedidos pela própria loja e tendem a ser positivos. Por isso só contam os de compra verificada, com peso pequeno (20%), e com a mesma proteção da regra 2: com poucos reviews, a nota de produto parte da média de produto do segmento. A outra opção é mostrar duas notas, atendimento e produto, sem misturar.</li>
         <li><b>A nota diz de onde veio.</b> Cada empresa mostra quantas reclamações e quantos reviews entraram, e de que período.</li>
-        <li><b>Picos fora do normal ficam em espera.</b> Sem esta regra, a regra 1 deixaria um ataque recente mais forte, porque o falso é sempre novo. Se numa semana chegam mais de 3 vezes as avaliações que a empresa costuma receber, o excedente só conta depois de verificado. Melhora de verdade é gradual e continua contando inteira. Vale para ataque positivo e negativo.</li>
+        <li><b>Picos fora do normal ficam em espera.</b> Sem esta regra, a regra 1 deixaria um ataque recente mais forte, porque o falso é sempre novo. Se numa semana chegam mais de 3 vezes as reclamações que a empresa costuma receber, o excedente fica em espera até verificação (não simulada aqui). Melhora de verdade é gradual e continua contando inteira. Vale para ataque positivo e negativo. Neste protótipo, a regra cobre só reclamações.</li>
       </ol>
       <a class="link-regras" href="#controles">Voltar aos controles ↑</a>
 
       <h3>Antes de lançar de verdade</h3>
-      <p>Rodaria as duas fórmulas no histórico real para ver quem muda de faixa e por quê, lançaria aos poucos, começando por um segmento, e avisaria as empresas antes, mostrando a nota nova ao lado da atual por um tempo.</p>
+      <p>Rodaria as duas fórmulas no histórico real para ver quem muda de faixa e por quê, lançaria aos poucos, começando por um segmento, e avisaria as empresas antes, mostrando a nota nova ao lado da atual por um tempo. Também testaria ataques lentos e contínuos, com poucas reclamações falsas por semana, que a regra 5 não pega.</p>
     </section>
   </main>
 
