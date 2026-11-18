@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Reputação</title>
+  <meta name="description" content="Protótipo que compara a fórmula atual de nota de reputação com uma proposta, usando 60 empresas fictícias.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="aviso" role="note">Protótipo com dados fictícios. A fórmula atual segue a descrição pública de uma plataforma de reputação, aqui chamada de Plataforma Alfa (jul/2026).</div>
+
+  <main class="wrap">
+    <header class="topo">
+      <h1>Simulador de nota de reputação</h1>
+      <p class="lead">Como ficaria a nota de 60 empresas fictícias se a fórmula mudasse. Mexa nos controles e veja o efeito na hora.</p>
+      <a class="link-regras" href="#como-funciona">Entenda as regras ↓</a>
+    </header>
+
+    <section class="card resumo" aria-labelledby="t-resumo">
+      <h2 id="t-resumo">Em 3 frases</h2>
+      <ol id="resumo"></ol>
+    </section>
+
+    <section class="card" id="controles" aria-labelledby="t-controles">
+      <div class="card-topo">
+        <div>
+          <h2 id="t-controles">Controles da proposta</h2>
+          <a class="link-regras" href="#proposta">O que cada regra faz ↓</a>
+        </div>
+        <button type="button" class="btn-sec" id="restaurar">Restaurar padrão</button>
+      </div>
+      <div class="controles">
+        <div class="campo">
+          <label for="meiaVida"><span class="num-regra">1</span> Avaliação perde metade do peso a cada <b id="meiaVida-valor"></b></label>
+          <input type="range" id="meiaVida" min="15" max="365" step="15">
+        </div>
+        <div class="campo">
+          <label for="volumeCheio"><span class="num-regra">2</span> Avaliações até a nota ser só da empresa: <b id="volumeCheio-valor"></b></label>
+          <input type="range" id="volumeCheio" min="5" max="100" step="5">
+        </div>
+        <div class="campo">
+          <span class="rotulo"><span class="num-regra">3</span> Reviews de produto</span>
+          <div class="seg-btn" role="group" aria-label="Como usar os reviews">
+            <button type="button" data-modo="unica">Nota única</button>
+            <button type="button" data-modo="duas">Duas notas lado a lado</button>
+          </div>
+          <div id="campo-peso" class="sub-campo">
+            <label for="pesoReviews">Peso dos reviews verificados: <b id="pesoReviews-valor"></b></label>
+            <input type="range" id="pesoReviews" min="0" max="50" step="5">
+          </div>
+        </div>
+        <div class="campo">
+          <span class="rotulo"><span class="num-regra">4</span> Mostrar de onde veio a nota <span class="tag">sempre ligado</span></span>
+          <p class="sub-campo info">Cada empresa mostra quantas reclamações e quantos reviews entraram na nota, e de que período. Veja embaixo do nome, na tabela.</p>
+        </div>
+        <div class="campo">
+          <label class="check"><input type="checkbox" id="picos"> <span><span class="num-regra">5</span> Segurar picos fora do normal</span></label>
+          <div id="campo-limite" class="sub-campo">
+            <label for="limitePico">Pico = semana com mais de <b id="limitePico-valor"></b> o ritmo normal</label>
+            <input type="range" id="limitePico" min="2" max="10" step="1">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="t-matriz">
+      <h2 id="t-matriz">Quem muda de faixa</h2>
+      <p class="explica">Cada linha é a faixa de hoje. Cada coluna, a faixa com a proposta. Fora da diagonal estão as empresas que mudam.</p>
+      <div id="matriz" class="rolagem"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-tabela">
+      <h2 id="t-tabela">Empresa por empresa</h2>
+      <div class="filtros">
+        <select id="filtro-seg" aria-label="Filtrar por segmento"></select>
+        <select id="ordem-celular" class="so-celular" aria-label="Ordenar por">
+          <option value="diff">Ordenar: maior mudança</option>
+          <option value="proposta">Ordenar: nota proposta</option>
+          <option value="atual">Ordenar: nota atual</option>
+          <option value="volume">Ordenar: mais avaliações</option>
+          <option value="nome">Ordenar: nome</option>
+        </select>
+        <label class="check"><input type="checkbox" id="so-muda"> <span>Só quem muda de faixa</span></label>
+        <span class="sub" id="contagem"></span>
+      </div>
+      <p class="explica">Linhas destacadas mudam de faixa. Dá para ordenar por qualquer coluna.</p>
+      <div id="tabela" class="rolagem"></div>
+    </section>
+
+    <section class="card" id="ataque" aria-labelledby="t-ataque">
+      <h2 id="t-ataque">Simulação de ataque</h2>
+      <p class="explica">Avaliações falsas chegando todas nos últimos 7 dias. Quanto a nota se move em cada fórmula?</p>
+      <div class="atk-controles">
+        <div class="campo">
+          <label for="atk-empresa">Empresa</label>
+          <select id="atk-empresa"></select>
+        </div>
+        <div class="campo">
+          <label for="atk-qtd">Avaliações falsas: <b id="atk-qtd-valor"></b></label>
+          <input type="range" id="atk-qtd" min="5" max="200" step="5" value="30">
+        </div>
+        <fieldset class="campo radios">
+          <legend>Tipo</legend>
+          <label class="check"><input type="radio" name="atk-tipo" value="positivo" checked> <span>A própria empresa, nota máxima</span></label>
+          <label class="check"><input type="radio" name="atk-tipo" value="negativo"> <span>Concorrente, nota mínima</span></label>
+        </fieldset>
+      </div>
+      <div id="atk-resultado"></div>
+      <p class="legenda"><span class="ponto-leg antes"></span> antes <span class="ponto-leg depois"></span> depois do ataque. Traços marcam as faixas (5, 6, 7 e 8).</p>
+    </section>
+
+    <section class="card como" id="como-funciona" aria-labelledby="t-como">
+      <h2 id="t-como">Como funciona</h2>
+
+      <h3>Fórmula atual</h3>
+      <p>Olha os últimos 6 meses, só reclamações encerradas e avaliadas pelo consumidor. Junta 4 números: % respondidas (peso 2), nota do consumidor (peso 3), % resolvidas (peso 3) e % que voltaria a fazer negócio (peso 2). Com menos de 10 avaliações, não mostra nota. Se a empresa respondeu menos da metade, cai para Não recomendada, seja qual for a nota.</p>
+
+      <h3 id="proposta">Proposta</h3>
+      <ol class="regras">
+        <li><b>O recente vale mais.</b> Olhamos 12 meses, mas uma avaliação perde metade do peso a cada 90 dias. A de 3 meses atrás vale metade da de hoje, a de 6 meses vale um quarto. Quem melhorou aparece rápido, sem jogar o histórico fora.</li>
+        <li><b>Pouco volume parte da média do segmento.</b> Com 5 de 20 avaliações, a nota é 25% da empresa e 75% da média do segmento. Com 20 ou mais, é 100% da empresa. Acaba o degrau das 10 avaliações: toda empresa tem nota, com o selo "pouco volume" quando for o caso.</li>
+        <li><b>Reviews entram com cuidado.</b> São pedidos pela própria loja e tendem a ser positivos. Por isso só contam os de compra verificada, com peso pequeno (20%). A outra opção é mostrar duas notas, atendimento e produto, sem misturar.</li>
+        <li><b>A nota diz de onde veio.</b> Cada empresa mostra quantas reclamações e quantos reviews entraram, e de que período.</li>
+        <li><b>Picos fora do normal ficam em espera.</b> Sem esta regra, a regra 1 deixaria um ataque recente mais forte, porque o falso é sempre novo. Se numa semana chegam mais de 3 vezes as avaliações que a empresa costuma receber, o excedente só conta depois de verificado. Melhora de verdade é gradual e continua contando inteira. Vale para ataque positivo e negativo.</li>
+      </ol>
+      <a class="link-regras" href="#controles">Voltar aos controles ↑</a>
+
+      <h3>Antes de lançar de verdade</h3>
+      <p>Rodaria as duas fórmulas no histórico real para ver quem muda de faixa e por quê, lançaria aos poucos, começando por um segmento, e avisaria as empresas antes, mostrando a nota nova ao lado da atual por um tempo.</p>
+    </section>
+  </main>
+
+  <footer class="rodape">Protótipo por Glaucio Garcia</footer>
+
+  <script src="data.js"></script>
+  <script src="formulas.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
