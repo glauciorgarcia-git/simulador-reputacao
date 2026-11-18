@@ -108,9 +108,9 @@ teste('regra 5: pico de 30 numa semana é amortecido', function () {
   assert.strictEqual(m[10], 1);
 });
 
-/* ---------- Itens da revisão ---------- */
+/* ---------- Proteções da proposta ---------- */
 
-teste('item 1: corte de 50% usa o índice real, não o suavizado', function () {
+teste('corte de 50% respondidas usa o índice real da empresa, não o suavizado', function () {
   // 12 reclamações antigas (peso baixo, nota bem puxada para o segmento), só 4 respondidas.
   var lista = [];
   for (var i = 0; i < 12; i++) lista.push(rec(200, i < 4, true, true, 9));
@@ -120,14 +120,14 @@ teste('item 1: corte de 50% usa o índice real, não o suavizado', function () {
   assert.strictEqual(r.faixa, 'Não recomendada');
 });
 
-teste('item 1: com menos de 10 reclamações, o corte de 50% não vale', function () {
+teste('corte de 50% respondidas só vale a partir de 10 reclamações', function () {
   var lista = [rec(0, false, false, false, 5), rec(1, false, false, false, 5)];
   var r = F.proposta({ reclamacoes: lista, reviews: [] }, media, P);
   assert.notStrictEqual(r.faixa, 'Não recomendada');
   assert.ok(r.poucoVolume);
 });
 
-teste('item 2: um único review verificado não muda a faixa', function () {
+teste('pouco volume nos reviews: um único review verificado não muda a faixa', function () {
   var lista = [];
   for (var i = 0; i < 40; i++) lista.push(rec(i, true, i < 27, i < 26, 7));
   var unica = Object.assign({}, P, { modo: 'unica' });
@@ -139,7 +139,7 @@ teste('item 2: um único review verificado não muda a faixa', function () {
   assert.ok(perto(com.produto, 0.05 * 10 + 0.95 * 7), 'produto ' + com.produto);
 });
 
-teste('item 3: reclamações antigas contam menos como volume', function () {
+teste('volume recente: reclamações antigas contam menos como volume', function () {
   var antigas = [], novas = [];
   for (var i = 0; i < 20; i++) { antigas.push(rec(300, true, true, true, 10)); novas.push(rec(0, true, true, true, 10)); }
   var a = F.proposta({ reclamacoes: antigas, reviews: [] }, media, P);
@@ -149,7 +149,7 @@ teste('item 3: reclamações antigas contam menos como volume', function () {
   assert.ok(a.poucoVolume && !n.poucoVolume);
 });
 
-teste('item 4: ataque negativo respeita se a empresa responde', function () {
+teste('ataque de concorrente: reclamações falsas respeitam se a empresa responde', function () {
   var nao = F.reclamacoesFalsas(30, 'negativo', false);
   var sim = F.reclamacoesFalsas(30, 'negativo', true);
   assert.strictEqual(nao.length, 30);
